@@ -114,7 +114,9 @@ jobs:
           "curseforge_project_id=$projectId" >> $env:GITHUB_OUTPUT
 
       - name: Build release artifact
-        run: ./gradlew build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build
 
       - name: Generate changelog
         shell: pwsh
