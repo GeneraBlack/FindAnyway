@@ -60,6 +60,13 @@ Die Datei kann nach Aenderungen per ` /findanyway config reload` neu geladen wer
 - Standardtaste: `B`
 - Befehle: ` /findanyway`, ` /findanyway nearest <query>`, ` /findanyway target <query>`, ` /findanyway target clear`, ` /findanyway structure`, ` /findanyway structure nearest <query>`, ` /findanyway structure target <query>`, ` /findanyway config reload`
 
+## Release-Automation
+
+- Der Workflow [.github/workflows/publish.yml](.github/workflows/publish.yml) veroeffentlicht neue Versionen automatisch auf CurseForge und als GitHub Release.
+- Ausgeloest wird er bei einem Tag-Push im Format `v*`, zum Beispiel `v0.1.1`, oder manuell ueber `workflow_dispatch`.
+- Erwartete GitHub-Konfiguration: Secrets `CURSEFORGE_TOKEN` und `CURSEFORGE_PROJECT_ID`.
+- Der Workflow validiert, dass ein gepushtes Tag zur `mod_version` in [gradle.properties](gradle.properties) passt.
+
 ## Lizenz
 
 MIT
