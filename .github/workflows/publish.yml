@@ -77,18 +77,41 @@ jobs:
           "release_name=$releaseName" >> $env:GITHUB_OUTPUT
 
       - name: Validate publish configuration
+        id: publish_config
         shell: pwsh
         env:
-          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-          CURSEFORGE_PROJECT_ID: ${{ secrets.CURSEFORGE_PROJECT_ID }}
+          CURSEFORGE_TOKEN_PRIMARY: ${{ secrets.CURSEFORGE_TOKEN }}
+          CURSEFORGE_TOKEN_FALLBACK: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          CURSEFORGE_PROJECT_ID_PRIMARY: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          CURSEFORGE_PROJECT_ID_FALLBACK: ${{ secrets.CURSEFORGE_PROJECT_ID }}
         run: |
-          if (-not $env:CURSEFORGE_TOKEN) {
-            throw 'Missing CURSEFORGE_TOKEN secret'
+          $token = if ($env:CURSEFORGE_TOKEN_PRIMARY) {
+            $env:CURSEFORGE_TOKEN_PRIMARY
+          } elseif ($env:CURSEFORGE_TOKEN_FALLBACK) {
+            $env:CURSEFORGE_TOKEN_FALLBACK
+          } else {
+            $null
           }
 
-          if (-not $env:CURSEFORGE_PROJECT_ID) {
-            throw 'Missing CURSEFORGE_PROJECT_ID secret'
+          $projectId = if ($env:CURSEFORGE_PROJECT_ID_PRIMARY) {
+            $env:CURSEFORGE_PROJECT_ID_PRIMARY
+          } elseif ($env:CURSEFORGE_PROJECT_ID_FALLBACK) {
+            $env:CURSEFORGE_PROJECT_ID_FALLBACK
+          } else {
+            $null
           }
+
+          if (-not $token) {
+            throw 'Missing CurseForge token. Expected CURSEFORGE_TOKEN or CURSEFORGE_API_TOKEN.'
+          }
+
+          if (-not $projectId) {
+            throw 'Missing CurseForge project id. Expected CURSEFORGE_PROJECT_ID as repository variable or secret.'
+          }
+
+          Write-Output "::add-mask::$token"
+          "curseforge_token=$token" >> $env:GITHUB_OUTPUT
+          "curseforge_project_id=$projectId" >> $env:GITHUB_OUTPUT
 
       - name: Build release artifact
         run: ./gradlew build
@@ -123,8 +146,8 @@ jobs:
       - name: Publish to CurseForge and GitHub Releases
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          curseforge-id: ${{ secrets.CURSEFORGE_PROJECT_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-id: ${{ steps.publish_config.outputs.curseforge_project_id }}
+          curseforge-token: ${{ steps.publish_config.outputs.curseforge_token }}
           github-tag: ${{ steps.meta.outputs.release_tag }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-generate-changelog: false
