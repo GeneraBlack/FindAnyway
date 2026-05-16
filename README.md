@@ -59,3 +59,7 @@ Die Datei kann nach Aenderungen per ` /findanyway config reload` neu geladen wer
 - Starten: `gradlew.bat runClient`
 - Standardtaste: `B`
 - Befehle: ` /findanyway`, ` /findanyway nearest <query>`, ` /findanyway target <query>`, ` /findanyway target clear`, ` /findanyway structure`, ` /findanyway structure nearest <query>`, ` /findanyway structure target <query>`, ` /findanyway config reload`
+
+## Lizenz
+
+MIT

@@ -1,4 +1,4 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
 import java.util.List;
 import java.util.Objects;

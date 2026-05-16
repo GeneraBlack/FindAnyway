@@ -1,8 +1,8 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.blaze3d.platform.InputConstants;
-import de.gener.biomfinder.BiomFinderMod;
+import de.gener.findanyway.FindAnywayMod;
 import java.util.Objects;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -18,15 +18,15 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
 
 @SuppressWarnings({"unused", "null"})
-public final class BiomeFinderClientEvents {
+public final class FindAnywayClientEvents {
     private static final String QUERY_ARGUMENT = "query";
-    private static final String NO_WORLD_KEY = "commands.biomfinder.no_world";
+    private static final String NO_WORLD_KEY = "commands.findanyway.no_world";
 
     private static final KeyMapping OPEN_FINDER = new KeyMapping(
-        "key." + BiomFinderMod.MOD_ID + ".open",
+        "key." + FindAnywayMod.MOD_ID + ".open",
         InputConstants.Type.KEYSYM,
         GLFW.GLFW_KEY_B,
-        "key.categories." + BiomFinderMod.MOD_ID
+        "key.categories." + FindAnywayMod.MOD_ID
     );
 
     private final BiomeTracker tracker = new BiomeTracker();
@@ -53,7 +53,7 @@ public final class BiomeFinderClientEvents {
         ClientLevel level = Objects.requireNonNull(minecraft.level);
 
         while (OPEN_FINDER.consumeClick()) {
-            minecraft.setScreen(new BiomeFinderScreen(tracker, structureTracker, targetManager));
+            minecraft.setScreen(new FindAnywayBiomeScreen(tracker, structureTracker, targetManager));
         }
 
         scanCooldown++;
@@ -104,7 +104,7 @@ public final class BiomeFinderClientEvents {
     }
 
     public void onRegisterClientCommands(RegisterClientCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal(BiomFinderMod.MOD_ID)
+        event.getDispatcher().register(Commands.literal(FindAnywayMod.MOD_ID)
             .executes(context -> openFinder())
             .then(Commands.literal("current")
                 .executes(context -> shareCurrentBiome()))
@@ -131,7 +131,7 @@ public final class BiomeFinderClientEvents {
 
     private int openFinder() {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new BiomeFinderScreen(tracker, structureTracker, targetManager));
+        minecraft.setScreen(new FindAnywayBiomeScreen(tracker, structureTracker, targetManager));
         return 1;
     }
 
@@ -155,7 +155,7 @@ public final class BiomeFinderClientEvents {
             .map(biomeId -> {
                 var pos = player.blockPosition();
                 sendClientMessage(Component.translatable(
-                    "commands.biomfinder.current",
+                    "commands.findanyway.current",
                     biomeId.toString(),
                     pos.getX(),
                     pos.getY(),
@@ -183,7 +183,7 @@ public final class BiomeFinderClientEvents {
             .map(match -> {
                 var nearest = match.nearestPos();
                 sendClientMessage(Component.translatable(
-                    "commands.biomfinder.nearest",
+                    "commands.findanyway.nearest",
                     match.biomeId().toString(),
                     nearest.getX(),
                     nearest.getY(),
@@ -193,7 +193,7 @@ public final class BiomeFinderClientEvents {
                 return 1;
             })
             .orElseGet(() -> {
-                sendClientMessage(Component.translatable("commands.biomfinder.missing", query));
+                sendClientMessage(Component.translatable("commands.findanyway.missing", query));
                 return 0;
             });
     }
@@ -212,7 +212,7 @@ public final class BiomeFinderClientEvents {
             .map(match -> {
                 var anchor = match.anchorPos();
                 sendClientMessage(Component.translatable(
-                    "commands.biomfinder.nearest",
+                    "commands.findanyway.nearest",
                     match.displayName(),
                     anchor.getX(),
                     anchor.getY(),
@@ -222,7 +222,7 @@ public final class BiomeFinderClientEvents {
                 return 1;
             })
             .orElseGet(() -> {
-                sendClientMessage(Component.translatable("commands.biomfinder.structure_missing", query));
+                sendClientMessage(Component.translatable("commands.findanyway.structure_missing", query));
                 return 0;
             });
     }
@@ -242,7 +242,7 @@ public final class BiomeFinderClientEvents {
                 setTarget(level.dimension().location(), match);
                 var nearest = match.nearestPos();
                 sendClientMessage(Component.translatable(
-                    "commands.biomfinder.target_set",
+                    "commands.findanyway.target_set",
                     match.biomeId().toString(),
                     nearest.getX(),
                     nearest.getY(),
@@ -251,7 +251,7 @@ public final class BiomeFinderClientEvents {
                 return 1;
             })
             .orElseGet(() -> {
-                sendClientMessage(Component.translatable("commands.biomfinder.missing", query));
+                sendClientMessage(Component.translatable("commands.findanyway.missing", query));
                 return 0;
             });
     }
@@ -271,7 +271,7 @@ public final class BiomeFinderClientEvents {
                 targetManager.setStructureTarget(level.dimension().location(), match);
                 var anchor = match.anchorPos();
                 sendClientMessage(Component.translatable(
-                    "commands.biomfinder.target_set",
+                    "commands.findanyway.target_set",
                     match.displayName(),
                     anchor.getX(),
                     anchor.getY(),
@@ -280,19 +280,19 @@ public final class BiomeFinderClientEvents {
                 return 1;
             })
             .orElseGet(() -> {
-                sendClientMessage(Component.translatable("commands.biomfinder.structure_missing", query));
+                sendClientMessage(Component.translatable("commands.findanyway.structure_missing", query));
                 return 0;
             });
     }
 
     private int clearTarget() {
         if (targetManager.getTarget() == null) {
-            sendClientMessage(Component.translatable("commands.biomfinder.target_cleared"));
+            sendClientMessage(Component.translatable("commands.findanyway.target_cleared"));
             return 0;
         }
 
         targetManager.clear();
-        sendClientMessage(Component.translatable("commands.biomfinder.target_cleared"));
+        sendClientMessage(Component.translatable("commands.findanyway.target_cleared"));
         return 1;
     }
 
@@ -301,9 +301,9 @@ public final class BiomeFinderClientEvents {
     }
 
     private int reloadClientConfig() {
-        BiomeFinderClientConfig config = BiomeFinderClientConfig.reload();
+        FindAnywayClientConfig config = FindAnywayClientConfig.reload();
         targetManager.reapplyCurrentTarget();
-        sendClientMessage(Component.translatable("commands.biomfinder.config_reloaded", config.getPath().toString()));
+        sendClientMessage(Component.translatable("commands.findanyway.config_reloaded", config.getPath().toString()));
         return 1;
     }
 

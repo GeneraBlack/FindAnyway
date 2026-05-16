@@ -1,4 +1,4 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -597,7 +597,7 @@ public final class StructureTracker {
     }
 
     private enum StructureType {
-        TRIAL_CHAMBERS(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "trial_chambers"), "structure.biomfinder.trial_chambers", 96) {
+        TRIAL_CHAMBERS(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "trial_chambers"), "structure.findanyway.trial_chambers", 96) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 if (!level.dimension().equals(Level.OVERWORLD)) {
@@ -606,7 +606,7 @@ public final class StructureTracker {
                 return findFirstBlock(level, chunkX, chunkZ, level.getMinBuildHeight(), 32, Blocks.TRIAL_SPAWNER, Blocks.VAULT);
             }
         },
-        ANCIENT_CITY(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ancient_city"), "structure.biomfinder.ancient_city", 192) {
+        ANCIENT_CITY(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ancient_city"), "structure.findanyway.ancient_city", 192) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 if (!level.dimension().equals(Level.OVERWORLD)) {
@@ -615,31 +615,31 @@ public final class StructureTracker {
                 return findFirstBlock(level, chunkX, chunkZ, level.getMinBuildHeight(), 16, Blocks.REINFORCED_DEEPSLATE);
             }
         },
-        OCEAN_MONUMENT(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ocean_monument"), "structure.biomfinder.ocean_monument", 128) {
+        OCEAN_MONUMENT(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ocean_monument"), "structure.findanyway.ocean_monument", 128) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findOceanMonumentSignature(level, chunkX, chunkZ);
             }
         },
-        END_CITY(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "end_city"), "structure.biomfinder.end_city", 160) {
+        END_CITY(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "end_city"), "structure.findanyway.end_city", 160) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findEndCitySignature(level, chunkX, chunkZ);
             }
         },
-        WOODLAND_MANSION(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "woodland_mansion"), "structure.biomfinder.woodland_mansion", 224) {
+        WOODLAND_MANSION(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "woodland_mansion"), "structure.findanyway.woodland_mansion", 224) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findWoodlandMansionSignature(level, chunkX, chunkZ);
             }
         },
-        NETHER_FORTRESS(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "fortress"), "structure.biomfinder.nether_fortress", 192) {
+        NETHER_FORTRESS(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "fortress"), "structure.findanyway.nether_fortress", 192) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findNetherFortressSignature(level, chunkX, chunkZ);
             }
         },
-        BASTION_REMNANT(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "bastion_remnant"), "structure.biomfinder.bastion_remnant", 224) {
+        BASTION_REMNANT(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "bastion_remnant"), "structure.findanyway.bastion_remnant", 224) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findBastionSignature(level, chunkX, chunkZ);

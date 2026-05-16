@@ -1,10 +1,10 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.mojang.logging.LogUtils;
-import de.gener.biomfinder.FindAnywayPaths;
+import de.gener.findanyway.FindAnywayPaths;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;

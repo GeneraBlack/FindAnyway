@@ -1,4 +1,4 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,7 +13,7 @@ import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
 @SuppressWarnings({"null"})
-public final class BiomeFinderScreen extends Screen {
+public final class FindAnywayBiomeScreen extends Screen {
     private static final int ROW_HEIGHT = 14;
     private static final int LIST_TOP = 60;
     private static final int PANEL_GAP = 6;
@@ -34,8 +34,8 @@ public final class BiomeFinderScreen extends Screen {
     private BiomeTracker.BiomeMatch selectedBiome;
     private int scrollOffset;
 
-    public BiomeFinderScreen(BiomeTracker tracker, StructureTracker structureTracker, NavigationTargetManager targetManager) {
-        super(Component.translatable("screen.biomfinder.title"));
+    public FindAnywayBiomeScreen(BiomeTracker tracker, StructureTracker structureTracker, NavigationTargetManager targetManager) {
+        super(Component.translatable("screen.findanyway.biome.title"));
         this.tracker = tracker;
         this.structureTracker = structureTracker;
         this.targetManager = targetManager;
@@ -49,24 +49,24 @@ public final class BiomeFinderScreen extends Screen {
         int buttonWidth = (contentWidth - (buttonGap * 4)) / 5;
         int buttonY = this.height - 28;
 
-        this.searchBox = new EditBox(this.font, left, 28, contentWidth, 20, Component.translatable("screen.biomfinder.search"));
-        this.searchBox.setHint(Component.translatable("screen.biomfinder.search_hint"));
+        this.searchBox = new EditBox(this.font, left, 28, contentWidth, 20, Component.translatable("screen.findanyway.biome.search"));
+        this.searchBox.setHint(Component.translatable("screen.findanyway.biome.search_hint"));
         this.searchBox.setResponder(value -> {
             this.scrollOffset = 0;
             refreshMatches();
         });
         this.addRenderableWidget(this.searchBox);
 
-        this.targetButton = this.addRenderableWidget(Button.builder(Component.translatable("screen.biomfinder.target"), button -> toggleTarget())
+        this.targetButton = this.addRenderableWidget(Button.builder(Component.translatable("screen.findanyway.biome.target"), button -> toggleTarget())
             .bounds(left, buttonY, buttonWidth, 20)
             .build());
-        this.shareSelectedButton = this.addRenderableWidget(Button.builder(Component.translatable("screen.biomfinder.send_selected"), button -> shareSelected())
+        this.shareSelectedButton = this.addRenderableWidget(Button.builder(Component.translatable("screen.findanyway.biome.send_selected"), button -> shareSelected())
             .bounds(left + buttonWidth + buttonGap, buttonY, buttonWidth, 20)
             .build());
-        this.addRenderableWidget(Button.builder(Component.translatable("screen.biomfinder.send_current"), button -> shareCurrent())
+        this.addRenderableWidget(Button.builder(Component.translatable("screen.findanyway.biome.send_current"), button -> shareCurrent())
             .bounds(left + (buttonWidth + buttonGap) * 2, buttonY, buttonWidth, 20)
             .build());
-        this.addRenderableWidget(Button.builder(Component.translatable("screen.biomfinder.open_structures"), button -> openStructureFinder())
+        this.addRenderableWidget(Button.builder(Component.translatable("screen.findanyway.biome.open_structures"), button -> openStructureScreen())
             .bounds(left + (buttonWidth + buttonGap) * 3, buttonY, buttonWidth, 20)
             .build());
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
@@ -188,7 +188,7 @@ public final class BiomeFinderScreen extends Screen {
             boolean selectedIsTarget = hasSelection
                 && minecraft.level != null
                 && this.targetManager.isTrackingBiome(minecraft.level.dimension().location(), this.selectedBiome.biomeId());
-            this.targetButton.setMessage(Component.translatable(selectedIsTarget ? "screen.biomfinder.target_clear" : "screen.biomfinder.target"));
+            this.targetButton.setMessage(Component.translatable(selectedIsTarget ? "screen.findanyway.biome.target_clear" : "screen.findanyway.biome.target"));
         }
 
         if (this.shareSelectedButton != null) {
@@ -198,7 +198,7 @@ public final class BiomeFinderScreen extends Screen {
 
     private void renderList(GuiGraphics guiGraphics, int mouseX, int mouseY, int left, int right, int listTop) {
         if (this.visibleBiomes.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, Component.translatable("screen.biomfinder.none"), this.width / 2, listTop + 10, 0xAAAAAA);
+            guiGraphics.drawCenteredString(this.font, Component.translatable("screen.findanyway.biome.none"), this.width / 2, listTop + 10, 0xAAAAAA);
             return;
         }
 
@@ -228,15 +228,15 @@ public final class BiomeFinderScreen extends Screen {
     }
 
     private void renderSelectionDetails(GuiGraphics guiGraphics, int left, int y) {
-        guiGraphics.drawString(this.font, Component.translatable("screen.biomfinder.limit"), left, y, 0xB0B0B0);
+        guiGraphics.drawString(this.font, Component.translatable("screen.findanyway.biome.limit"), left, y, 0xB0B0B0);
         if (this.selectedBiome == null) {
-            guiGraphics.drawString(this.font, Component.translatable("screen.biomfinder.selected_none"), left, y + 12, 0x909090);
+            guiGraphics.drawString(this.font, Component.translatable("screen.findanyway.biome.selected_none"), left, y + 12, 0x909090);
         } else {
             var pos = this.selectedBiome.nearestPos();
             guiGraphics.drawString(
                 this.font,
                 Component.translatable(
-                    "screen.biomfinder.selected",
+                    "screen.findanyway.biome.selected",
                     this.selectedBiome.biomeId().toString(),
                     pos.getX(),
                     pos.getY(),
@@ -256,7 +256,7 @@ public final class BiomeFinderScreen extends Screen {
     private String getStatusLine() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
-            return Component.translatable("commands.biomfinder.no_world").getString();
+            return Component.translatable("commands.findanyway.no_world").getString();
         }
 
         String currentBiome = tracker.getCurrentSurfaceBiome(Objects.requireNonNull(minecraft.level), Objects.requireNonNull(minecraft.player).blockPosition())
@@ -264,7 +264,7 @@ public final class BiomeFinderScreen extends Screen {
             .orElse("-");
 
         return Component.translatable(
-            "screen.biomfinder.status",
+            "screen.findanyway.biome.status",
             currentBiome,
             tracker.getKnownBiomeCount(minecraft.level),
             this.visibleBiomes.size()
@@ -345,7 +345,7 @@ public final class BiomeFinderScreen extends Screen {
 
         var pos = this.selectedBiome.nearestPos();
         Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable(
-            "commands.biomfinder.nearest",
+            "commands.findanyway.nearest",
             this.selectedBiome.biomeId().toString(),
             pos.getX(),
             pos.getY(),
@@ -363,7 +363,7 @@ public final class BiomeFinderScreen extends Screen {
         tracker.getCurrentSurfaceBiome(Objects.requireNonNull(minecraft.level), Objects.requireNonNull(minecraft.player).blockPosition()).ifPresent(biomeId -> {
             var pos = Objects.requireNonNull(minecraft.player).blockPosition();
             Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable(
-                "commands.biomfinder.current",
+                "commands.findanyway.current",
                 biomeId.toString(),
                 pos.getX(),
                 pos.getY(),
@@ -372,7 +372,7 @@ public final class BiomeFinderScreen extends Screen {
         });
     }
 
-    private void openStructureFinder() {
+    private void openStructureScreen() {
         Minecraft.getInstance().setScreen(new StructureFinderScreen(this.tracker, this.structureTracker, this.targetManager));
     }
 
@@ -388,12 +388,12 @@ public final class BiomeFinderScreen extends Screen {
 
         if (this.targetManager.isTrackingBiome(Objects.requireNonNull(minecraft.level).dimension().location(), this.selectedBiome.biomeId())) {
             this.targetManager.clear();
-            Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable("commands.biomfinder.target_cleared"));
+            Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable("commands.findanyway.target_cleared"));
         } else {
             this.targetManager.setBiomeTarget(Objects.requireNonNull(minecraft.level).dimension().location(), this.selectedBiome);
             var pos = this.selectedBiome.nearestPos();
             Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable(
-                "commands.biomfinder.target_set",
+                "commands.findanyway.target_set",
                 this.selectedBiome.biomeId().toString(),
                 pos.getX(),
                 pos.getY(),
@@ -407,7 +407,7 @@ public final class BiomeFinderScreen extends Screen {
     private void renderActiveTarget(GuiGraphics guiGraphics, int left, int y) {
         NavigationTargetManager.Target target = this.targetManager.getTarget();
         if (target == null) {
-            guiGraphics.drawString(this.font, Component.translatable("screen.biomfinder.active_target_none"), left, y, 0x909090);
+            guiGraphics.drawString(this.font, Component.translatable("screen.findanyway.target.none"), left, y, 0x909090);
             return;
         }
 
@@ -420,7 +420,7 @@ public final class BiomeFinderScreen extends Screen {
                 target.targetPos().getZ() + 0.5D - minecraft.player.getZ()
             ));
             line = Component.translatable(
-                "screen.biomfinder.active_target",
+                "screen.findanyway.target.active",
                 target.displayName(),
                 target.targetPos().getX(),
                 target.targetPos().getY(),
@@ -429,7 +429,7 @@ public final class BiomeFinderScreen extends Screen {
             );
         } else {
             line = Component.translatable(
-                "screen.biomfinder.active_target_other_dimension",
+                "screen.findanyway.target.other_dimension",
                 target.displayName(),
                 target.dimensionId().toString(),
                 target.targetPos().getX(),

@@ -1,8 +1,8 @@
-package de.gener.biomfinder.integration.journeymap;
+package de.gener.findanyway.integration.journeymap;
 
-import de.gener.biomfinder.BiomFinderMod;
-import de.gener.biomfinder.client.BiomeFinderClientConfig;
-import de.gener.biomfinder.client.NavigationTargetManager;
+import de.gener.findanyway.FindAnywayMod;
+import de.gener.findanyway.client.FindAnywayClientConfig;
+import de.gener.findanyway.client.NavigationTargetManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.logging.LogUtils;
 import journeymap.api.v2.client.display.DisplayType;
@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 
 @JourneyMapPlugin(apiVersion = "2.0.0")
 @SuppressWarnings("null")
-public final class BiomeFinderJourneyMapPlugin implements IClientPlugin, NavigationTargetManager.Listener {
+public final class FindAnywayJourneyMapPlugin implements IClientPlugin, NavigationTargetManager.Listener {
     private static final String OVERLAY_GROUP = "FindAnyway";
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -39,7 +39,7 @@ public final class BiomeFinderJourneyMapPlugin implements IClientPlugin, Navigat
 
     @Override
     public String getModId() {
-        return BiomFinderMod.MOD_ID;
+        return FindAnywayMod.MOD_ID;
     }
 
     @Override
@@ -54,16 +54,16 @@ public final class BiomeFinderJourneyMapPlugin implements IClientPlugin, Navigat
             return;
         }
 
-        BiomeFinderClientConfig.JourneyMapSettings settings = BiomeFinderClientConfig.get().journeyMap();
+        FindAnywayClientConfig.JourneyMapSettings settings = FindAnywayClientConfig.get().journeyMap();
         ResourceKey<Level> dimensionKey = ResourceKey.create(Registries.DIMENSION, target.dimensionId());
 
         try {
-            if (settings.markerEnabled() && journeyMapApi.playerAccepts(BiomFinderMod.MOD_ID, DisplayType.Marker)) {
+            if (settings.markerEnabled() && journeyMapApi.playerAccepts(FindAnywayMod.MOD_ID, DisplayType.Marker)) {
                 currentMarkerOverlay = createMarkerOverlay(target, dimensionKey, settings);
                 journeyMapApi.show(currentMarkerOverlay);
             }
 
-            if (settings.areaEnabled() && journeyMapApi.playerAccepts(BiomFinderMod.MOD_ID, DisplayType.Polygon)) {
+            if (settings.areaEnabled() && journeyMapApi.playerAccepts(FindAnywayMod.MOD_ID, DisplayType.Polygon)) {
                 currentAreaOverlay = createAreaOverlay(target, dimensionKey, settings);
                 journeyMapApi.show(currentAreaOverlay);
             }
@@ -84,11 +84,11 @@ public final class BiomeFinderJourneyMapPlugin implements IClientPlugin, Navigat
         }
     }
 
-    private MarkerOverlay createMarkerOverlay(NavigationTargetManager.Target target, ResourceKey<Level> dimensionKey, BiomeFinderClientConfig.JourneyMapSettings settings) {
+    private MarkerOverlay createMarkerOverlay(NavigationTargetManager.Target target, ResourceKey<Level> dimensionKey, FindAnywayClientConfig.JourneyMapSettings settings) {
         MapImage icon = new MapImage(createMarkerIcon(24));
         icon.centerAnchors().setColor(settings.markerColor());
 
-        MarkerOverlay overlay = new MarkerOverlay(BiomFinderMod.MOD_ID, target.targetPos(), icon);
+        MarkerOverlay overlay = new MarkerOverlay(FindAnywayMod.MOD_ID, target.targetPos(), icon);
         overlay.setDimension(dimensionKey)
             .setOverlayGroupName(OVERLAY_GROUP)
             .setLabel(shortTargetLabel(target))
@@ -102,14 +102,14 @@ public final class BiomeFinderJourneyMapPlugin implements IClientPlugin, Navigat
         return overlay;
     }
 
-    private PolygonOverlay createAreaOverlay(NavigationTargetManager.Target target, ResourceKey<Level> dimensionKey, BiomeFinderClientConfig.JourneyMapSettings settings) {
+    private PolygonOverlay createAreaOverlay(NavigationTargetManager.Target target, ResourceKey<Level> dimensionKey, FindAnywayClientConfig.JourneyMapSettings settings) {
         int radius = settings.areaRadiusBlocks();
         BlockPos center = target.targetPos();
         BlockPos firstCorner = new BlockPos(center.getX() - radius, center.getY(), center.getZ() - radius);
         BlockPos secondCorner = new BlockPos(center.getX() + radius, center.getY(), center.getZ() + radius);
 
         PolygonOverlay overlay = new PolygonOverlay(
-            BiomFinderMod.MOD_ID,
+            FindAnywayMod.MOD_ID,
             dimensionKey,
             new ShapeProperties()
                 .setStrokeWidth(2.0F)

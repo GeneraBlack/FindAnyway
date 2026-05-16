@@ -1,4 +1,4 @@
-package de.gener.biomfinder;
+package de.gener.findanyway;
 
 import com.mojang.logging.LogUtils;
 import java.io.IOException;

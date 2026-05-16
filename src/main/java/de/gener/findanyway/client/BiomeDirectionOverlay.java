@@ -1,6 +1,6 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
-import de.gener.biomfinder.BiomFinderMod;
+import de.gener.findanyway.FindAnywayMod;
 import java.util.Objects;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -19,7 +19,7 @@ public final class BiomeDirectionOverlay {
     private static final int TEXT_COLOR = 0xFFFFFF;
     private static final int DETAIL_COLOR = 0xFFD37A;
     private static final int DIMENSION_COLOR = 0xFFC8C8C8;
-    private static final ResourceLocation LAYER_ID = ResourceLocation.fromNamespaceAndPath(BiomFinderMod.MOD_ID, "target_overlay");
+    private static final ResourceLocation LAYER_ID = ResourceLocation.fromNamespaceAndPath(FindAnywayMod.MOD_ID, "target_overlay");
 
     private final NavigationTargetManager targetManager = NavigationTargetManager.getInstance();
 
@@ -36,7 +36,7 @@ public final class BiomeDirectionOverlay {
         LocalPlayer player = Objects.requireNonNull(minecraft.player);
         ClientLevel level = Objects.requireNonNull(minecraft.level);
 
-        BiomeFinderClientConfig.OverlaySettings settings = BiomeFinderClientConfig.get().overlay();
+        FindAnywayClientConfig.OverlaySettings settings = FindAnywayClientConfig.get().overlay();
         if (!settings.enabled()) {
             return;
         }
@@ -48,16 +48,16 @@ public final class BiomeDirectionOverlay {
 
         Font font = minecraft.font;
         boolean sameDimension = target.dimensionId().equals(level.dimension().location());
-        Component title = Component.translatable("overlay.biomfinder.target", target.displayName());
+        Component title = Component.translatable("overlay.findanyway.target", target.displayName());
         Component detail = sameDimension
             ? Component.translatable(
-                "overlay.biomfinder.target_detail",
+                "overlay.findanyway.target_detail",
                 directionArrow(player.getYRot(), player.getX(), player.getZ(), target.targetPos()),
                 horizontalDistance(player.getX(), player.getZ(), target.targetPos()),
                 target.targetPos().getX(),
                 target.targetPos().getZ()
             )
-            : Component.translatable("overlay.biomfinder.target_other_dimension", target.dimensionId().toString());
+            : Component.translatable("overlay.findanyway.target_other_dimension", target.dimensionId().toString());
 
         int boxWidth = Math.max(font.width(title), font.width(detail)) + 12;
         int boxHeight = 28;
@@ -66,7 +66,7 @@ public final class BiomeDirectionOverlay {
         int scaledHeight = Mth.ceil(boxHeight * scale);
         int guiWidth = minecraft.getWindow().getGuiScaledWidth();
         int guiHeight = minecraft.getWindow().getGuiScaledHeight();
-        BiomeFinderClientConfig.OverlayAnchor anchor = settings.anchor();
+        FindAnywayClientConfig.OverlayAnchor anchor = settings.anchor();
 
         int left = (guiWidth - scaledWidth) / 2;
         if (anchor.isLeft()) {

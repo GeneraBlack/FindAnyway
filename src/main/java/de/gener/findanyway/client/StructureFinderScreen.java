@@ -1,4 +1,4 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
 import java.util.List;
 import java.util.Objects;
@@ -253,7 +253,7 @@ public final class StructureFinderScreen extends Screen {
     private String getStatusLine() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
-            return Component.translatable("commands.biomfinder.no_world").getString();
+            return Component.translatable("commands.findanyway.no_world").getString();
         }
 
         return Component.translatable(
@@ -338,7 +338,7 @@ public final class StructureFinderScreen extends Screen {
 
         var pos = this.selectedStructure.anchorPos();
         Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable(
-            "commands.biomfinder.nearest",
+            "commands.findanyway.nearest",
             this.selectedStructure.displayName(),
             pos.getX(),
             pos.getY(),
@@ -348,7 +348,7 @@ public final class StructureFinderScreen extends Screen {
     }
 
     private void openBiomeFinder() {
-        Minecraft.getInstance().setScreen(new BiomeFinderScreen(this.biomeTracker, this.structureTracker, this.targetManager));
+        Minecraft.getInstance().setScreen(new FindAnywayBiomeScreen(this.biomeTracker, this.structureTracker, this.targetManager));
     }
 
     private void toggleTarget() {
@@ -363,12 +363,12 @@ public final class StructureFinderScreen extends Screen {
 
         if (this.targetManager.isTrackingStructure(Objects.requireNonNull(minecraft.level).dimension().location(), this.selectedStructure)) {
             this.targetManager.clear();
-            Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable("commands.biomfinder.target_cleared"));
+            Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable("commands.findanyway.target_cleared"));
         } else {
             this.targetManager.setStructureTarget(Objects.requireNonNull(minecraft.level).dimension().location(), this.selectedStructure);
             var pos = this.selectedStructure.anchorPos();
             Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable(
-                "commands.biomfinder.target_set",
+                "commands.findanyway.target_set",
                 this.selectedStructure.displayName(),
                 pos.getX(),
                 pos.getY(),
@@ -382,7 +382,7 @@ public final class StructureFinderScreen extends Screen {
     private void renderActiveTarget(GuiGraphics guiGraphics, int left, int y) {
         NavigationTargetManager.Target target = this.targetManager.getTarget();
         if (target == null) {
-            guiGraphics.drawString(this.font, Component.translatable("screen.biomfinder.active_target_none"), left, y, 0x909090);
+            guiGraphics.drawString(this.font, Component.translatable("screen.findanyway.target.none"), left, y, 0x909090);
             return;
         }
 
@@ -395,7 +395,7 @@ public final class StructureFinderScreen extends Screen {
                 target.targetPos().getZ() + 0.5D - minecraft.player.getZ()
             ));
             line = Component.translatable(
-                "screen.biomfinder.active_target",
+                "screen.findanyway.target.active",
                 target.displayName(),
                 target.targetPos().getX(),
                 target.targetPos().getY(),
@@ -404,7 +404,7 @@ public final class StructureFinderScreen extends Screen {
             );
         } else {
             line = Component.translatable(
-                "screen.biomfinder.active_target_other_dimension",
+                "screen.findanyway.target.other_dimension",
                 target.displayName(),
                 target.dimensionId().toString(),
                 target.targetPos().getX(),

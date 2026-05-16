@@ -1,10 +1,10 @@
-package de.gener.biomfinder.client;
+package de.gener.findanyway.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.mojang.logging.LogUtils;
-import de.gener.biomfinder.FindAnywayPaths;
+import de.gener.findanyway.FindAnywayPaths;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -14,22 +14,22 @@ import java.nio.file.Path;
 import net.minecraft.util.Mth;
 import org.slf4j.Logger;
 
-public final class BiomeFinderClientConfig {
+public final class FindAnywayClientConfig {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-    private static BiomeFinderClientConfig current;
+    private static FindAnywayClientConfig current;
 
     private OverlaySettings overlay = new OverlaySettings();
     private JourneyMapSettings journeyMap = new JourneyMapSettings();
 
-    public static synchronized BiomeFinderClientConfig get() {
+    public static synchronized FindAnywayClientConfig get() {
         if (current == null) {
             current = loadOrCreate();
         }
         return current;
     }
 
-    public static synchronized BiomeFinderClientConfig reload() {
+    public static synchronized FindAnywayClientConfig reload() {
         current = loadOrCreate();
         return current;
     }
@@ -46,7 +46,7 @@ public final class BiomeFinderClientConfig {
         return resolvePath();
     }
 
-    private static BiomeFinderClientConfig loadOrCreate() {
+    private static FindAnywayClientConfig loadOrCreate() {
         Path path = resolvePath();
         try {
             Files.createDirectories(path.getParent());
@@ -55,22 +55,22 @@ public final class BiomeFinderClientConfig {
         }
 
         if (!Files.exists(path)) {
-            BiomeFinderClientConfig defaults = new BiomeFinderClientConfig();
+            FindAnywayClientConfig defaults = new FindAnywayClientConfig();
             defaults.sanitize();
             defaults.save();
             return defaults;
         }
 
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            BiomeFinderClientConfig loaded = GSON.fromJson(reader, BiomeFinderClientConfig.class);
+            FindAnywayClientConfig loaded = GSON.fromJson(reader, FindAnywayClientConfig.class);
             if (loaded == null) {
-                loaded = new BiomeFinderClientConfig();
+                loaded = new FindAnywayClientConfig();
             }
             loaded.sanitize();
             return loaded;
         } catch (IOException | JsonParseException ex) {
             LOGGER.warn("Could not load client config from {}. Falling back to defaults.", path, ex);
-            BiomeFinderClientConfig defaults = new BiomeFinderClientConfig();
+            FindAnywayClientConfig defaults = new FindAnywayClientConfig();
             defaults.sanitize();
             defaults.save();
             return defaults;
