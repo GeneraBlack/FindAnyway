@@ -20,7 +20,7 @@ import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
 public final class BiomeTrackerPersistence {
@@ -88,11 +88,11 @@ public final class BiomeTrackerPersistence {
         data.worldType = session.type();
         data.displayName = session.displayName();
 
-        for (Map.Entry<ResourceLocation, BiomeTracker.DimensionSnapshot> dimensionEntry : snapshot.dimensions().entrySet()) {
+        for (Map.Entry<Identifier, BiomeTracker.DimensionSnapshot> dimensionEntry : snapshot.dimensions().entrySet()) {
             SavedDimension savedDimension = new SavedDimension();
             savedDimension.dimension = dimensionEntry.getKey().toString();
 
-            for (Map.Entry<ResourceLocation, List<BlockPos>> biomeEntry : dimensionEntry.getValue().discoveries().entrySet()) {
+            for (Map.Entry<Identifier, List<BlockPos>> biomeEntry : dimensionEntry.getValue().discoveries().entrySet()) {
                 SavedBiome savedBiome = new SavedBiome();
                 savedBiome.biome = biomeEntry.getKey().toString();
                 for (BlockPos sample : biomeEntry.getValue()) {
@@ -112,21 +112,21 @@ public final class BiomeTrackerPersistence {
     }
 
     private BiomeTracker.TrackerSnapshot toSnapshot(SavedTrackerData data) {
-        Map<ResourceLocation, BiomeTracker.DimensionSnapshot> dimensions = new LinkedHashMap<>();
+        Map<Identifier, BiomeTracker.DimensionSnapshot> dimensions = new LinkedHashMap<>();
         if (data == null || data.dimensions == null) {
             return new BiomeTracker.TrackerSnapshot(dimensions);
         }
 
         for (SavedDimension savedDimension : data.dimensions) {
-            ResourceLocation dimensionId = parseId(savedDimension.dimension);
+            Identifier dimensionId = parseId(savedDimension.dimension);
             if (dimensionId == null) {
                 continue;
             }
 
-            Map<ResourceLocation, List<BlockPos>> discoveries = new LinkedHashMap<>();
+            Map<Identifier, List<BlockPos>> discoveries = new LinkedHashMap<>();
             if (savedDimension.biomes != null) {
                 for (SavedBiome savedBiome : savedDimension.biomes) {
-                    ResourceLocation biomeId = parseId(savedBiome.biome);
+                    Identifier biomeId = parseId(savedBiome.biome);
                     if (biomeId == null) {
                         continue;
                     }
@@ -147,11 +147,11 @@ public final class BiomeTrackerPersistence {
         return new BiomeTracker.TrackerSnapshot(dimensions);
     }
 
-    private ResourceLocation parseId(String value) {
+    private Identifier parseId(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return ResourceLocation.tryParse(value);
+        return Identifier.tryParse(value);
     }
 
     private static String storageId(String type, String rawIdentifier) {

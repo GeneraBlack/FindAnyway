@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
 public final class StructureTrackerPersistence {
@@ -69,7 +69,7 @@ public final class StructureTrackerPersistence {
         data.worldType = session.type();
         data.displayName = session.displayName();
 
-        for (Map.Entry<ResourceLocation, List<StructureTracker.StructureSnapshot>> dimensionEntry : snapshot.dimensions().entrySet()) {
+        for (Map.Entry<Identifier, List<StructureTracker.StructureSnapshot>> dimensionEntry : snapshot.dimensions().entrySet()) {
             SavedDimension savedDimension = new SavedDimension();
             savedDimension.dimension = dimensionEntry.getKey().toString();
 
@@ -93,13 +93,13 @@ public final class StructureTrackerPersistence {
     }
 
     private StructureTracker.TrackerSnapshot toSnapshot(SavedTrackerData data) {
-        Map<ResourceLocation, List<StructureTracker.StructureSnapshot>> dimensions = new LinkedHashMap<>();
+        Map<Identifier, List<StructureTracker.StructureSnapshot>> dimensions = new LinkedHashMap<>();
         if (data == null || data.dimensions == null) {
             return new StructureTracker.TrackerSnapshot(dimensions);
         }
 
         for (SavedDimension savedDimension : data.dimensions) {
-            ResourceLocation dimensionId = parseId(savedDimension.dimension);
+            Identifier dimensionId = parseId(savedDimension.dimension);
             if (dimensionId == null) {
                 continue;
             }
@@ -107,7 +107,7 @@ public final class StructureTrackerPersistence {
             List<StructureTracker.StructureSnapshot> structures = new ArrayList<>();
             if (savedDimension.structures != null) {
                 for (SavedStructure savedStructure : savedDimension.structures) {
-                    ResourceLocation structureId = parseId(savedStructure.structure);
+                    Identifier structureId = parseId(savedStructure.structure);
                     if (structureId == null) {
                         continue;
                     }
@@ -128,11 +128,11 @@ public final class StructureTrackerPersistence {
         return new StructureTracker.TrackerSnapshot(dimensions);
     }
 
-    private ResourceLocation parseId(String value) {
+    private Identifier parseId(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return ResourceLocation.tryParse(value);
+        return Identifier.tryParse(value);
     }
 
     private static final class SavedTrackerData {

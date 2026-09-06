@@ -3,10 +3,12 @@ package de.gener.findanyway.client;
 import java.util.List;
 import java.util.Objects;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -84,9 +86,8 @@ public final class FindAnywayBiomeScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
         int contentWidth = Math.min(420, this.width - 40);
         int left = (this.width - contentWidth) / 2;
@@ -96,8 +97,8 @@ public final class FindAnywayBiomeScreen extends Screen {
         int detailsTop = getDetailsTop();
         int detailsBottom = getDetailsBottom();
 
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
-        guiGraphics.drawString(this.font, getStatusLine(), left, 52, 0xD0D0D0);
+        guiGraphics.centeredText(this.font, this.title, this.width / 2, 10, 0xFFFFFFFF);
+        guiGraphics.text(this.font, getStatusLine(), left, 52, 0xFFD0D0D0);
         drawPanel(guiGraphics, left, listTop, right, listBottom);
         drawPanel(guiGraphics, left, detailsTop, right, detailsBottom);
 
@@ -106,9 +107,9 @@ public final class FindAnywayBiomeScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            int clickedIndex = getEntryIndexAt(mouseX, mouseY);
+    public boolean mouseClicked(MouseButtonEvent event, boolean isDouble) {
+        if (event.button() == 0) {
+            int clickedIndex = getEntryIndexAt(event.x(), event.y());
             if (clickedIndex >= 0 && clickedIndex < this.visibleBiomes.size()) {
                 this.selectedBiome = this.visibleBiomes.get(clickedIndex);
                 updateButtons();
@@ -116,7 +117,7 @@ public final class FindAnywayBiomeScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, isDouble);
     }
 
     @Override
@@ -136,18 +137,23 @@ public final class FindAnywayBiomeScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+    public boolean keyPressed(KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
             shareSelected();
             return true;
         }
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public boolean isInGameUi() {
+        return true;
     }
 
     private void refreshMatches() {
@@ -187,7 +193,7 @@ public final class FindAnywayBiomeScreen extends Screen {
             this.targetButton.active = hasSelection;
             boolean selectedIsTarget = hasSelection
                 && minecraft.level != null
-                && this.targetManager.isTrackingBiome(minecraft.level.dimension().location(), this.selectedBiome.biomeId());
+                && this.targetManager.isTrackingBiome(minecraft.level.dimension().identifier(), this.selectedBiome.biomeId());
             this.targetButton.setMessage(Component.translatable(selectedIsTarget ? "screen.findanyway.biome.target_clear" : "screen.findanyway.biome.target"));
         }
 
@@ -196,9 +202,9 @@ public final class FindAnywayBiomeScreen extends Screen {
         }
     }
 
-    private void renderList(GuiGraphics guiGraphics, int mouseX, int mouseY, int left, int right, int listTop) {
+    private void renderList(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, int left, int right, int listTop) {
         if (this.visibleBiomes.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, Component.translatable("screen.findanyway.biome.none"), this.width / 2, listTop + 10, 0xAAAAAA);
+            guiGraphics.centeredText(this.font, Component.translatable("screen.findanyway.biome.none"), this.width / 2, listTop + 10, 0xFFAAAAAA);
             return;
         }
 
@@ -223,17 +229,17 @@ public final class FindAnywayBiomeScreen extends Screen {
             }
 
             String line = formatEntry(match);
-            guiGraphics.drawString(this.font, this.font.plainSubstrByWidth(line, lineWidth), left + 4, rowY + 2, selected ? 0xFFFFFF : 0xE0E0E0);
+            guiGraphics.text(this.font, this.font.plainSubstrByWidth(line, lineWidth), left + 4, rowY + 2, selected ? 0xFFFFFFFF : 0xFFE0E0E0);
         }
     }
 
-    private void renderSelectionDetails(GuiGraphics guiGraphics, int left, int y) {
-        guiGraphics.drawString(this.font, Component.translatable("screen.findanyway.biome.limit"), left, y, 0xB0B0B0);
+    private void renderSelectionDetails(GuiGraphicsExtractor guiGraphics, int left, int y) {
+        guiGraphics.text(this.font, Component.translatable("screen.findanyway.biome.limit"), left, y, 0xFFB0B0B0);
         if (this.selectedBiome == null) {
-            guiGraphics.drawString(this.font, Component.translatable("screen.findanyway.biome.selected_none"), left, y + 12, 0x909090);
+            guiGraphics.text(this.font, Component.translatable("screen.findanyway.biome.selected_none"), left, y + 12, 0xFF909090);
         } else {
             var pos = this.selectedBiome.nearestPos();
-            guiGraphics.drawString(
+            guiGraphics.text(
                 this.font,
                 Component.translatable(
                     "screen.findanyway.biome.selected",
@@ -246,7 +252,7 @@ public final class FindAnywayBiomeScreen extends Screen {
                 ),
                 left,
                 y + 12,
-                0xFFFFFF
+                0xFFFFFFFF
             );
         }
 
@@ -328,7 +334,7 @@ public final class FindAnywayBiomeScreen extends Screen {
         return getDetailsTop() - PANEL_GAP;
     }
 
-    private void drawPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
+    private void drawPanel(GuiGraphicsExtractor guiGraphics, int left, int top, int right, int bottom) {
         guiGraphics.fill(left, top, right, bottom, PANEL_BORDER_COLOR);
         guiGraphics.fill(left + 1, top + 1, right - 1, bottom - 1, PANEL_FILL_COLOR);
     }
@@ -373,7 +379,7 @@ public final class FindAnywayBiomeScreen extends Screen {
     }
 
     private void openStructureScreen() {
-        Minecraft.getInstance().setScreen(new StructureFinderScreen(this.tracker, this.structureTracker, this.targetManager));
+        Minecraft.getInstance().setScreenAndShow(new StructureFinderScreen(this.tracker, this.structureTracker, this.targetManager));
     }
 
     private void toggleTarget() {
@@ -386,11 +392,11 @@ public final class FindAnywayBiomeScreen extends Screen {
             return;
         }
 
-        if (this.targetManager.isTrackingBiome(Objects.requireNonNull(minecraft.level).dimension().location(), this.selectedBiome.biomeId())) {
+        if (this.targetManager.isTrackingBiome(Objects.requireNonNull(minecraft.level).dimension().identifier(), this.selectedBiome.biomeId())) {
             this.targetManager.clear();
             Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable("commands.findanyway.target_cleared"));
         } else {
-            this.targetManager.setBiomeTarget(Objects.requireNonNull(minecraft.level).dimension().location(), this.selectedBiome);
+            this.targetManager.setBiomeTarget(Objects.requireNonNull(minecraft.level).dimension().identifier(), this.selectedBiome);
             var pos = this.selectedBiome.nearestPos();
             Objects.requireNonNull(minecraft.player).sendSystemMessage(Component.translatable(
                 "commands.findanyway.target_set",
@@ -404,15 +410,15 @@ public final class FindAnywayBiomeScreen extends Screen {
         updateButtons();
     }
 
-    private void renderActiveTarget(GuiGraphics guiGraphics, int left, int y) {
+    private void renderActiveTarget(GuiGraphicsExtractor guiGraphics, int left, int y) {
         NavigationTargetManager.Target target = this.targetManager.getTarget();
         if (target == null) {
-            guiGraphics.drawString(this.font, Component.translatable("screen.findanyway.target.none"), left, y, 0x909090);
+            guiGraphics.text(this.font, Component.translatable("screen.findanyway.target.none"), left, y, 0xFF909090);
             return;
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        boolean sameDimension = minecraft.level != null && target.dimensionId().equals(minecraft.level.dimension().location());
+        boolean sameDimension = minecraft.level != null && target.dimensionId().equals(minecraft.level.dimension().identifier());
         Component line;
         if (sameDimension && minecraft.player != null) {
             int distance = Mth.floor(Math.hypot(
@@ -438,6 +444,6 @@ public final class FindAnywayBiomeScreen extends Screen {
             );
         }
 
-        guiGraphics.drawString(this.font, line, left, y, 0xD9C07A);
+        guiGraphics.text(this.font, line, left, y, 0xFFD9C07A);
     }
 }

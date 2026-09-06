@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public final class NavigationTargetManager {
     private static final NavigationTargetManager INSTANCE = new NavigationTargetManager();
@@ -28,22 +28,22 @@ public final class NavigationTargetManager {
         updateTarget(null);
     }
 
-    public void setBiomeTarget(ResourceLocation dimensionId, BiomeTracker.BiomeMatch match) {
+    public void setBiomeTarget(Identifier dimensionId, BiomeTracker.BiomeMatch match) {
         updateTarget(new Target(dimensionId, TargetKind.BIOME, match.biomeId(), match.biomeId().toString(), match.nearestPos().immutable()));
     }
 
-    public void setStructureTarget(ResourceLocation dimensionId, StructureTracker.StructureMatch match) {
+    public void setStructureTarget(Identifier dimensionId, StructureTracker.StructureMatch match) {
         updateTarget(new Target(dimensionId, TargetKind.STRUCTURE, match.structureId(), match.displayName(), match.anchorPos().immutable()));
     }
 
-    public boolean isTrackingBiome(ResourceLocation dimensionId, ResourceLocation biomeId) {
+    public boolean isTrackingBiome(Identifier dimensionId, Identifier biomeId) {
         return target != null
             && target.kind() == TargetKind.BIOME
             && target.dimensionId().equals(dimensionId)
             && target.targetId().equals(biomeId);
     }
 
-    public boolean isTrackingStructure(ResourceLocation dimensionId, StructureTracker.StructureMatch match) {
+    public boolean isTrackingStructure(Identifier dimensionId, StructureTracker.StructureMatch match) {
         return target != null
             && target.kind() == TargetKind.STRUCTURE
             && target.dimensionId().equals(dimensionId)
@@ -53,7 +53,7 @@ public final class NavigationTargetManager {
 
     public void refreshBiomeTarget(ClientLevel level, BlockPos reference, BiomeTracker tracker) {
         Target current = this.target;
-        if (current == null || current.kind() != TargetKind.BIOME || !current.dimensionId().equals(level.dimension().location())) {
+        if (current == null || current.kind() != TargetKind.BIOME || !current.dimensionId().equals(level.dimension().identifier())) {
             return;
         }
 
@@ -104,6 +104,6 @@ public final class NavigationTargetManager {
         STRUCTURE
     }
 
-    public record Target(ResourceLocation dimensionId, TargetKind kind, ResourceLocation targetId, String displayName, BlockPos targetPos) {
+    public record Target(Identifier dimensionId, TargetKind kind, Identifier targetId, String displayName, BlockPos targetPos) {
     }
 }

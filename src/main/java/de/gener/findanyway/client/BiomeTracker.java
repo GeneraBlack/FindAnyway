@@ -13,7 +13,7 @@ import java.util.Set;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -23,7 +23,7 @@ public final class BiomeTracker {
     private static final int SAMPLE_START = 4;
     private static final int SAMPLE_STEP = 8;
 
-    private final Map<ResourceLocation, DimensionCache> dimensions = new HashMap<>();
+    private final Map<Identifier, DimensionCache> dimensions = new HashMap<>();
     private boolean dirty;
 
     public void clear() {
@@ -32,9 +32,9 @@ public final class BiomeTracker {
     }
 
     public void scan(ClientLevel level, LocalPlayer player) {
-        DimensionCache cache = dimensions.computeIfAbsent(level.dimension().location(), key -> new DimensionCache());
-        int centerChunkX = player.chunkPosition().x;
-        int centerChunkZ = player.chunkPosition().z;
+        DimensionCache cache = dimensions.computeIfAbsent(level.dimension().identifier(), key -> new DimensionCache());
+        int centerChunkX = player.chunkPosition().x();
+        int centerChunkZ = player.chunkPosition().z();
 
         for (int chunkX = centerChunkX - SCAN_RADIUS_CHUNKS; chunkX <= centerChunkX + SCAN_RADIUS_CHUNKS; chunkX++) {
             for (int chunkZ = centerChunkZ - SCAN_RADIUS_CHUNKS; chunkZ <= centerChunkZ + SCAN_RADIUS_CHUNKS; chunkZ++) {
@@ -44,16 +44,16 @@ public final class BiomeTracker {
     }
 
     public int getKnownBiomeCount(ClientLevel level) {
-        DimensionCache cache = dimensions.get(level.dimension().location());
+        DimensionCache cache = dimensions.get(level.dimension().identifier());
         return cache == null ? 0 : cache.discoveries.size();
     }
 
-    public Optional<ResourceLocation> getCurrentSurfaceBiome(ClientLevel level, BlockPos reference) {
+    public Optional<Identifier> getCurrentSurfaceBiome(ClientLevel level, BlockPos reference) {
         return sampleSurface(level, reference.getX(), reference.getZ()).map(sample -> resolveBiomeId(level, sample));
     }
 
     public List<BiomeMatch> getVisibleBiomes(ClientLevel level, BlockPos reference, String filter) {
-        DimensionCache cache = dimensions.get(level.dimension().location());
+        DimensionCache cache = dimensions.get(level.dimension().identifier());
         if (cache == null) {
             return List.of();
         }
@@ -93,7 +93,7 @@ public final class BiomeTracker {
             return;
         }
 
-        long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
+        long chunkKey = ChunkPos.pack(chunkX, chunkZ);
         if (!cache.scannedChunks.add(chunkKey)) {
             return;
         }
@@ -107,7 +107,7 @@ public final class BiomeTracker {
                 int worldZ = worldStartZ + localZ;
 
                 sampleSurface(level, worldX, worldZ).ifPresent(sample -> {
-                    ResourceLocation biomeId = resolveBiomeId(level, sample);
+                    Identifier biomeId = resolveBiomeId(level, sample);
                     if (biomeId != null && cache.discover(biomeId, sample)) {
                         dirty = true;
                     }
@@ -125,8 +125,8 @@ public final class BiomeTracker {
     }
 
     public TrackerSnapshot snapshot() {
-        Map<ResourceLocation, DimensionSnapshot> savedDimensions = new LinkedHashMap<>();
-        for (Map.Entry<ResourceLocation, DimensionCache> entry : dimensions.entrySet()) {
+        Map<Identifier, DimensionSnapshot> savedDimensions = new LinkedHashMap<>();
+        for (Map.Entry<Identifier, DimensionCache> entry : dimensions.entrySet()) {
             savedDimensions.put(entry.getKey(), entry.getValue().snapshot());
         }
         return new TrackerSnapshot(savedDimensions);
@@ -138,9 +138,9 @@ public final class BiomeTracker {
             return;
         }
 
-        for (Map.Entry<ResourceLocation, DimensionSnapshot> dimensionEntry : snapshot.dimensions().entrySet()) {
+        for (Map.Entry<Identifier, DimensionSnapshot> dimensionEntry : snapshot.dimensions().entrySet()) {
             DimensionCache cache = dimensions.computeIfAbsent(dimensionEntry.getKey(), key -> new DimensionCache());
-            for (Map.Entry<ResourceLocation, List<BlockPos>> biomeEntry : dimensionEntry.getValue().discoveries().entrySet()) {
+            for (Map.Entry<Identifier, List<BlockPos>> biomeEntry : dimensionEntry.getValue().discoveries().entrySet()) {
                 cache.restore(biomeEntry.getKey(), biomeEntry.getValue());
             }
         }
@@ -149,41 +149,41 @@ public final class BiomeTracker {
 
     private Optional<BlockPos> sampleSurface(ClientLevel level, int x, int z) {
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-        int clampedY = Mth.clamp(surfaceY, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
+        int clampedY = Mth.clamp(surfaceY, level.getMinY(), level.getMaxY() - 1);
         return Optional.of(new BlockPos(x, clampedY, z));
     }
 
-    private ResourceLocation resolveBiomeId(ClientLevel level, BlockPos sample) {
-        return level.getBiome(sample).unwrapKey().map(key -> key.location()).orElse(null);
+    private Identifier resolveBiomeId(ClientLevel level, BlockPos sample) {
+        return level.getBiome(sample).unwrapKey().map(key -> key.identifier()).orElse(null);
     }
 
     private static double horizontalDistance(BlockPos first, BlockPos second) {
         long deltaX = (long) second.getX() - first.getX();
         long deltaZ = (long) second.getZ() - first.getZ();
-        return Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+        return Math.sqrt((double) deltaX * deltaX + (double) deltaZ * deltaZ);
     }
 
-    public record BiomeMatch(ResourceLocation biomeId, BlockPos nearestPos, int sightings, double distanceBlocks) {
+    public record BiomeMatch(Identifier biomeId, BlockPos nearestPos, int sightings, double distanceBlocks) {
         public int roundedDistance() {
             return Mth.floor(distanceBlocks);
         }
     }
 
-    public record TrackerSnapshot(Map<ResourceLocation, DimensionSnapshot> dimensions) {
+    public record TrackerSnapshot(Map<Identifier, DimensionSnapshot> dimensions) {
     }
 
-    public record DimensionSnapshot(Map<ResourceLocation, List<BlockPos>> discoveries) {
+    public record DimensionSnapshot(Map<Identifier, List<BlockPos>> discoveries) {
     }
 
     private static final class DimensionCache {
         private final Set<Long> scannedChunks = new HashSet<>();
-        private final Map<ResourceLocation, BiomeDiscovery> discoveries = new LinkedHashMap<>();
+        private final Map<Identifier, BiomeDiscovery> discoveries = new LinkedHashMap<>();
 
-        private boolean discover(ResourceLocation biomeId, BlockPos sample) {
+        private boolean discover(Identifier biomeId, BlockPos sample) {
             return discoveries.computeIfAbsent(biomeId, BiomeDiscovery::new).add(sample);
         }
 
-        private void restore(ResourceLocation biomeId, List<BlockPos> samples) {
+        private void restore(Identifier biomeId, List<BlockPos> samples) {
             BiomeDiscovery discovery = discoveries.computeIfAbsent(biomeId, BiomeDiscovery::new);
             for (BlockPos sample : samples) {
                 discovery.add(sample);
@@ -191,8 +191,8 @@ public final class BiomeTracker {
         }
 
         private DimensionSnapshot snapshot() {
-            Map<ResourceLocation, List<BlockPos>> savedDiscoveries = new LinkedHashMap<>();
-            for (Map.Entry<ResourceLocation, BiomeDiscovery> entry : discoveries.entrySet()) {
+            Map<Identifier, List<BlockPos>> savedDiscoveries = new LinkedHashMap<>();
+            for (Map.Entry<Identifier, BiomeDiscovery> entry : discoveries.entrySet()) {
                 savedDiscoveries.put(entry.getKey(), entry.getValue().snapshot());
             }
             return new DimensionSnapshot(savedDiscoveries);
@@ -200,10 +200,10 @@ public final class BiomeTracker {
     }
 
     private static final class BiomeDiscovery {
-        private final ResourceLocation biomeId;
+        private final Identifier biomeId;
         private final Map<Long, BlockPos> sightings = new LinkedHashMap<>();
 
-        private BiomeDiscovery(ResourceLocation biomeId) {
+        private BiomeDiscovery(Identifier biomeId) {
             this.biomeId = biomeId;
         }
 

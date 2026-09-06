@@ -26,6 +26,6 @@ side="CLIENT"
 [[dependencies.${mod_id}]]
 modId="journeymap"
 type="optional"
-versionRange="[1.21-6.0.0-beta.1,)"
+versionRange="[26.2-6.0.0,)"
 ordering="NONE"
 side="CLIENT"

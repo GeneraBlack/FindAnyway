@@ -5,21 +5,21 @@ import java.util.Objects;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 
 @SuppressWarnings("null")
 public final class BiomeDirectionOverlay {
     private static final int BACKGROUND_COLOR = 0x90000000;
-    private static final int TEXT_COLOR = 0xFFFFFF;
-    private static final int DETAIL_COLOR = 0xFFD37A;
+    private static final int TEXT_COLOR = 0xFFFFFFFF;
+    private static final int DETAIL_COLOR = 0xFFFFD37A;
     private static final int DIMENSION_COLOR = 0xFFC8C8C8;
-    private static final ResourceLocation LAYER_ID = ResourceLocation.fromNamespaceAndPath(FindAnywayMod.MOD_ID, "target_overlay");
+    private static final Identifier LAYER_ID = Identifier.fromNamespaceAndPath(FindAnywayMod.MOD_ID, "target_overlay");
 
     private final NavigationTargetManager targetManager = NavigationTargetManager.getInstance();
 
@@ -27,9 +27,9 @@ public final class BiomeDirectionOverlay {
         event.registerAboveAll(LAYER_ID, this::render);
     }
 
-    private void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+    private void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.options.hideGui || minecraft.player == null || minecraft.level == null) {
+        if (minecraft.gui.hud.isHidden() || minecraft.player == null || minecraft.level == null) {
             return;
         }
 
@@ -47,7 +47,7 @@ public final class BiomeDirectionOverlay {
         }
 
         Font font = minecraft.font;
-        boolean sameDimension = target.dimensionId().equals(level.dimension().location());
+        boolean sameDimension = target.dimensionId().equals(level.dimension().identifier());
         Component title = Component.translatable("overlay.findanyway.target", target.displayName());
         Component detail = sameDimension
             ? Component.translatable(
@@ -85,15 +85,15 @@ public final class BiomeDirectionOverlay {
         left += settings.offsetX();
         top += settings.offsetY();
 
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(left, top, 0.0F);
-        guiGraphics.pose().scale(scale, scale, 1.0F);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate(left, top);
+        guiGraphics.pose().scale(scale, scale);
         if (settings.showBackground()) {
             guiGraphics.fill(0, 0, boxWidth, boxHeight, BACKGROUND_COLOR);
         }
-        guiGraphics.drawString(font, title, 6, 5, TEXT_COLOR);
-        guiGraphics.drawString(font, detail, 6, 16, sameDimension ? DETAIL_COLOR : DIMENSION_COLOR);
-        guiGraphics.pose().popPose();
+        guiGraphics.text(font, title, 6, 5, TEXT_COLOR);
+        guiGraphics.text(font, detail, 6, 16, sameDimension ? DETAIL_COLOR : DIMENSION_COLOR);
+        guiGraphics.pose().popMatrix();
     }
 
     private int horizontalDistance(double playerX, double playerZ, net.minecraft.core.BlockPos targetPos) {

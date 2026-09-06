@@ -15,7 +15,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -27,7 +27,7 @@ public final class StructureTracker {
     private static final int SCAN_RADIUS_CHUNKS = 12;
     private static final String MINECRAFT_NAMESPACE = "minecraft";
 
-    private final Map<ResourceLocation, DimensionCache> dimensions = new HashMap<>();
+    private final Map<Identifier, DimensionCache> dimensions = new HashMap<>();
     private boolean dirty;
 
     public void clear() {
@@ -36,9 +36,9 @@ public final class StructureTracker {
     }
 
     public void scan(ClientLevel level, LocalPlayer player) {
-        DimensionCache cache = dimensions.computeIfAbsent(level.dimension().location(), key -> new DimensionCache());
-        int centerChunkX = player.chunkPosition().x;
-        int centerChunkZ = player.chunkPosition().z;
+        DimensionCache cache = dimensions.computeIfAbsent(level.dimension().identifier(), key -> new DimensionCache());
+        int centerChunkX = player.chunkPosition().x();
+        int centerChunkZ = player.chunkPosition().z();
 
         for (int chunkX = centerChunkX - SCAN_RADIUS_CHUNKS; chunkX <= centerChunkX + SCAN_RADIUS_CHUNKS; chunkX++) {
             for (int chunkZ = centerChunkZ - SCAN_RADIUS_CHUNKS; chunkZ <= centerChunkZ + SCAN_RADIUS_CHUNKS; chunkZ++) {
@@ -48,12 +48,12 @@ public final class StructureTracker {
     }
 
     public int getKnownStructureCount(ClientLevel level) {
-        DimensionCache cache = dimensions.get(level.dimension().location());
+        DimensionCache cache = dimensions.get(level.dimension().identifier());
         return cache == null ? 0 : cache.sites.size();
     }
 
     public List<StructureMatch> getVisibleStructures(ClientLevel level, BlockPos reference, String filter) {
-        DimensionCache cache = dimensions.get(level.dimension().location());
+        DimensionCache cache = dimensions.get(level.dimension().identifier());
         if (cache == null) {
             return List.of();
         }
@@ -96,8 +96,8 @@ public final class StructureTracker {
     }
 
     public TrackerSnapshot snapshot() {
-        Map<ResourceLocation, List<StructureSnapshot>> savedDimensions = new LinkedHashMap<>();
-        for (Map.Entry<ResourceLocation, DimensionCache> entry : dimensions.entrySet()) {
+        Map<Identifier, List<StructureSnapshot>> savedDimensions = new LinkedHashMap<>();
+        for (Map.Entry<Identifier, DimensionCache> entry : dimensions.entrySet()) {
             savedDimensions.put(entry.getKey(), entry.getValue().snapshot());
         }
         return new TrackerSnapshot(savedDimensions);
@@ -109,7 +109,7 @@ public final class StructureTracker {
             return;
         }
 
-        for (Map.Entry<ResourceLocation, List<StructureSnapshot>> dimensionEntry : snapshot.dimensions().entrySet()) {
+        for (Map.Entry<Identifier, List<StructureSnapshot>> dimensionEntry : snapshot.dimensions().entrySet()) {
             DimensionCache cache = dimensions.computeIfAbsent(dimensionEntry.getKey(), key -> new DimensionCache());
             for (StructureSnapshot structureSnapshot : dimensionEntry.getValue()) {
                 cache.restore(structureSnapshot.structureId(), structureSnapshot.samples());
@@ -123,7 +123,7 @@ public final class StructureTracker {
             return;
         }
 
-        long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
+        long chunkKey = ChunkPos.pack(chunkX, chunkZ);
         if (!cache.scannedChunks.add(chunkKey)) {
             return;
         }
@@ -140,8 +140,8 @@ public final class StructureTracker {
     private static Optional<BlockPos> findFirstBlock(ClientLevel level, int chunkX, int chunkZ, int minY, int maxY, net.minecraft.world.level.block.Block... blocks) {
         int startX = chunkX << 4;
         int startZ = chunkZ << 4;
-        int clampedMinY = Math.max(level.getMinBuildHeight(), minY);
-        int clampedMaxY = Math.min(level.getMaxBuildHeight() - 1, maxY);
+        int clampedMinY = Math.max(level.getMinY(), minY);
+        int clampedMaxY = Math.min(level.getMaxY() - 1, maxY);
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
         for (int y = clampedMinY; y <= clampedMaxY; y++) {
@@ -165,15 +165,15 @@ public final class StructureTracker {
             return Optional.empty();
         }
 
-        ResourceLocation biomeId = sampleChunkBiome(level, chunkX, chunkZ, level.getSeaLevel()).orElse(null);
+        Identifier biomeId = sampleChunkBiome(level, chunkX, chunkZ, level.getSeaLevel()).orElse(null);
         if (biomeId == null || !biomeId.getPath().contains("ocean")) {
             return Optional.empty();
         }
 
         int startX = chunkX << 4;
         int startZ = chunkZ << 4;
-        int minY = Math.max(level.getMinBuildHeight(), 24);
-        int maxY = Math.min(level.getMaxBuildHeight() - 1, 80);
+        int minY = Math.max(level.getMinY(), 24);
+        int maxY = Math.min(level.getMaxY() - 1, 80);
         int prismarineBlocks = 0;
         int seaLanterns = 0;
         int waterBlocks = 0;
@@ -215,7 +215,7 @@ public final class StructureTracker {
             return Optional.empty();
         }
 
-        ResourceLocation biomeId = sampleChunkBiome(level, chunkX, chunkZ, 80).orElse(null);
+        Identifier biomeId = sampleChunkBiome(level, chunkX, chunkZ, 80).orElse(null);
         if (biomeId == null) {
             return Optional.empty();
         }
@@ -227,8 +227,8 @@ public final class StructureTracker {
 
         int startX = chunkX << 4;
         int startZ = chunkZ << 4;
-        int minY = Math.max(level.getMinBuildHeight(), 48);
-        int maxY = Math.min(level.getMaxBuildHeight() - 1, 128);
+        int minY = Math.max(level.getMinY(), 48);
+        int maxY = Math.min(level.getMaxY() - 1, 128);
         int purpurBlocks = 0;
         int endStoneBricks = 0;
         int endRods = 0;
@@ -273,15 +273,15 @@ public final class StructureTracker {
             return Optional.empty();
         }
 
-        ResourceLocation biomeId = sampleChunkBiome(level, chunkX, chunkZ, level.getSeaLevel()).orElse(null);
+        Identifier biomeId = sampleChunkBiome(level, chunkX, chunkZ, level.getSeaLevel()).orElse(null);
         if (biomeId == null || !biomeId.getPath().contains("dark_forest")) {
             return Optional.empty();
         }
 
         int startX = chunkX << 4;
         int startZ = chunkZ << 4;
-        int minY = Math.max(level.getMinBuildHeight(), 56);
-        int maxY = Math.min(level.getMaxBuildHeight() - 1, 140);
+        int minY = Math.max(level.getMinY(), 56);
+        int maxY = Math.min(level.getMaxY() - 1, 140);
         int darkOakBlocks = 0;
         int cobblestoneBlocks = 0;
         int carpets = 0;
@@ -328,8 +328,8 @@ public final class StructureTracker {
 
         int startX = chunkX << 4;
         int startZ = chunkZ << 4;
-        int minY = Math.max(level.getMinBuildHeight(), 16);
-        int maxY = Math.min(level.getMaxBuildHeight() - 1, 112);
+        int minY = Math.max(level.getMinY(), 16);
+        int maxY = Math.min(level.getMaxY() - 1, 112);
         int netherBricks = 0;
         int fences = 0;
         int stairs = 0;
@@ -390,8 +390,8 @@ public final class StructureTracker {
 
         int startX = chunkX << 4;
         int startZ = chunkZ << 4;
-        int minY = Math.max(level.getMinBuildHeight(), 18);
-        int maxY = Math.min(level.getMaxBuildHeight() - 1, 128);
+        int minY = Math.max(level.getMinY(), 18);
+        int maxY = Math.min(level.getMaxY() - 1, 128);
         int blackstoneBlocks = 0;
         int gildedBlackstone = 0;
         int goldBlocks = 0;
@@ -421,7 +421,7 @@ public final class StructureTracker {
                         if (anchor == null) {
                             anchor = mutablePos.immutable();
                         }
-                    } else if (state.is(Blocks.CHAIN)) {
+                    } else if (state.is(Blocks.IRON_CHAIN)) {
                         chains++;
                         if (anchor == null) {
                             anchor = mutablePos.immutable();
@@ -442,10 +442,10 @@ public final class StructureTracker {
         return Optional.empty();
     }
 
-    private static Optional<ResourceLocation> sampleChunkBiome(ClientLevel level, int chunkX, int chunkZ, int y) {
-        int clampedY = Mth.clamp(y, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
+    private static Optional<Identifier> sampleChunkBiome(ClientLevel level, int chunkX, int chunkZ, int y) {
+        int clampedY = Mth.clamp(y, level.getMinY(), level.getMaxY() - 1);
         BlockPos biomeSample = new BlockPos((chunkX << 4) + 8, clampedY, (chunkZ << 4) + 8);
-        return level.getBiome(biomeSample).unwrapKey().map(ResourceKey::location);
+        return level.getBiome(biomeSample).unwrapKey().map(ResourceKey::identifier);
     }
 
     private static boolean isEndCityPurpur(BlockState state) {
@@ -484,10 +484,10 @@ public final class StructureTracker {
     }
 
     private static boolean isWoodlandMansionCarpet(BlockState state) {
-        return state.is(Blocks.WHITE_CARPET)
-            || state.is(Blocks.RED_CARPET)
-            || state.is(Blocks.GRAY_CARPET)
-            || state.is(Blocks.LIGHT_GRAY_CARPET);
+        return state.is(Blocks.CARPET.white())
+            || state.is(Blocks.CARPET.red())
+            || state.is(Blocks.CARPET.gray())
+            || state.is(Blocks.CARPET.lightGray());
     }
 
     private static double horizontalDistance(BlockPos first, BlockPos second) {
@@ -496,23 +496,23 @@ public final class StructureTracker {
         return Math.sqrt((double) deltaX * deltaX + (double) deltaZ * deltaZ);
     }
 
-    public record StructureMatch(ResourceLocation structureId, String displayName, BlockPos anchorPos, int sightings, double distanceBlocks) {
+    public record StructureMatch(Identifier structureId, String displayName, BlockPos anchorPos, int sightings, double distanceBlocks) {
         public int roundedDistance() {
             return Mth.floor(distanceBlocks);
         }
     }
 
-    public record TrackerSnapshot(Map<ResourceLocation, List<StructureSnapshot>> dimensions) {
+    public record TrackerSnapshot(Map<Identifier, List<StructureSnapshot>> dimensions) {
     }
 
-    public record StructureSnapshot(ResourceLocation structureId, List<BlockPos> samples) {
+    public record StructureSnapshot(Identifier structureId, List<BlockPos> samples) {
     }
 
     private static final class DimensionCache {
         private final Set<Long> scannedChunks = new HashSet<>();
         private final List<StructureSite> sites = new ArrayList<>();
 
-        private boolean discover(ResourceLocation structureId, BlockPos sample) {
+        private boolean discover(Identifier structureId, BlockPos sample) {
             StructureSite site = findSite(structureId, sample);
             if (site == null) {
                 site = new StructureSite(structureId);
@@ -521,7 +521,7 @@ public final class StructureTracker {
             return site.add(sample);
         }
 
-        private void restore(ResourceLocation structureId, List<BlockPos> samples) {
+        private void restore(Identifier structureId, List<BlockPos> samples) {
             StructureSite site = new StructureSite(structureId);
             for (BlockPos sample : samples) {
                 site.add(sample);
@@ -539,7 +539,7 @@ public final class StructureTracker {
             return savedSites;
         }
 
-        private StructureSite findSite(ResourceLocation structureId, BlockPos sample) {
+        private StructureSite findSite(Identifier structureId, BlockPos sample) {
             double bestDistance = Double.MAX_VALUE;
             StructureSite bestMatch = null;
             int mergeRadius = StructureType.mergeRadiusFor(structureId);
@@ -562,10 +562,10 @@ public final class StructureTracker {
     }
 
     private static final class StructureSite {
-        private final ResourceLocation structureId;
+        private final Identifier structureId;
         private final Map<Long, BlockPos> sightings = new LinkedHashMap<>();
 
-        private StructureSite(ResourceLocation structureId) {
+        private StructureSite(Identifier structureId) {
             this.structureId = structureId;
         }
 
@@ -597,56 +597,56 @@ public final class StructureTracker {
     }
 
     private enum StructureType {
-        TRIAL_CHAMBERS(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "trial_chambers"), "structure.findanyway.trial_chambers", 96) {
+        TRIAL_CHAMBERS(Identifier.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "trial_chambers"), "structure.findanyway.trial_chambers", 96) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 if (!level.dimension().equals(Level.OVERWORLD)) {
                     return Optional.empty();
                 }
-                return findFirstBlock(level, chunkX, chunkZ, level.getMinBuildHeight(), 32, Blocks.TRIAL_SPAWNER, Blocks.VAULT);
+                return findFirstBlock(level, chunkX, chunkZ, level.getMinY(), 32, Blocks.TRIAL_SPAWNER, Blocks.VAULT);
             }
         },
-        ANCIENT_CITY(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ancient_city"), "structure.findanyway.ancient_city", 192) {
+        ANCIENT_CITY(Identifier.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ancient_city"), "structure.findanyway.ancient_city", 192) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 if (!level.dimension().equals(Level.OVERWORLD)) {
                     return Optional.empty();
                 }
-                return findFirstBlock(level, chunkX, chunkZ, level.getMinBuildHeight(), 16, Blocks.REINFORCED_DEEPSLATE);
+                return findFirstBlock(level, chunkX, chunkZ, level.getMinY(), 16, Blocks.REINFORCED_DEEPSLATE);
             }
         },
-        OCEAN_MONUMENT(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ocean_monument"), "structure.findanyway.ocean_monument", 128) {
+        OCEAN_MONUMENT(Identifier.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "ocean_monument"), "structure.findanyway.ocean_monument", 128) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findOceanMonumentSignature(level, chunkX, chunkZ);
             }
         },
-        END_CITY(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "end_city"), "structure.findanyway.end_city", 160) {
+        END_CITY(Identifier.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "end_city"), "structure.findanyway.end_city", 160) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findEndCitySignature(level, chunkX, chunkZ);
             }
         },
-        WOODLAND_MANSION(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "woodland_mansion"), "structure.findanyway.woodland_mansion", 224) {
+        WOODLAND_MANSION(Identifier.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "woodland_mansion"), "structure.findanyway.woodland_mansion", 224) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findWoodlandMansionSignature(level, chunkX, chunkZ);
             }
         },
-        NETHER_FORTRESS(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "fortress"), "structure.findanyway.nether_fortress", 192) {
+        NETHER_FORTRESS(Identifier.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "fortress"), "structure.findanyway.nether_fortress", 192) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findNetherFortressSignature(level, chunkX, chunkZ);
             }
         },
-        BASTION_REMNANT(ResourceLocation.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "bastion_remnant"), "structure.findanyway.bastion_remnant", 224) {
+        BASTION_REMNANT(Identifier.fromNamespaceAndPath(MINECRAFT_NAMESPACE, "bastion_remnant"), "structure.findanyway.bastion_remnant", 224) {
             @Override
             protected Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ) {
                 return findBastionSignature(level, chunkX, chunkZ);
             }
         };
 
-        private static final Map<ResourceLocation, StructureType> BY_ID = new HashMap<>();
+        private static final Map<Identifier, StructureType> BY_ID = new HashMap<>();
 
         static {
             for (StructureType structureType : values()) {
@@ -654,11 +654,11 @@ public final class StructureTracker {
             }
         }
 
-        private final ResourceLocation id;
+        private final Identifier id;
         private final String translationKey;
         private final int mergeRadiusBlocks;
 
-        StructureType(ResourceLocation id, String translationKey, int mergeRadiusBlocks) {
+        StructureType(Identifier id, String translationKey, int mergeRadiusBlocks) {
             this.id = id;
             this.translationKey = translationKey;
             this.mergeRadiusBlocks = mergeRadiusBlocks;
@@ -666,7 +666,7 @@ public final class StructureTracker {
 
         protected abstract Optional<BlockPos> detect(ClientLevel level, int chunkX, int chunkZ);
 
-        private ResourceLocation id() {
+        private Identifier id() {
             return id;
         }
 
@@ -674,12 +674,12 @@ public final class StructureTracker {
             return Component.translatable(translationKey).getString();
         }
 
-        private static String displayName(ResourceLocation structureId) {
+        private static String displayName(Identifier structureId) {
             StructureType structureType = BY_ID.get(structureId);
             return structureType == null ? structureId.toString() : structureType.displayName();
         }
 
-        private static int mergeRadiusFor(ResourceLocation structureId) {
+        private static int mergeRadiusFor(Identifier structureId) {
             StructureType structureType = BY_ID.get(structureId);
             return structureType == null ? 96 : structureType.mergeRadiusBlocks;
         }

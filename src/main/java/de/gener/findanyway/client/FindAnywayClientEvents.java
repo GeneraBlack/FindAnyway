@@ -10,7 +10,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
@@ -26,7 +26,7 @@ public final class FindAnywayClientEvents {
         "key." + FindAnywayMod.MOD_ID + ".open",
         InputConstants.Type.KEYSYM,
         GLFW.GLFW_KEY_B,
-        "key.categories." + FindAnywayMod.MOD_ID
+        KeyMapping.Category.register(Identifier.fromNamespaceAndPath(FindAnywayMod.MOD_ID, "main"))
     );
 
     private final BiomeTracker tracker = new BiomeTracker();
@@ -53,7 +53,7 @@ public final class FindAnywayClientEvents {
         ClientLevel level = Objects.requireNonNull(minecraft.level);
 
         while (OPEN_FINDER.consumeClick()) {
-            minecraft.setScreen(new FindAnywayBiomeScreen(tracker, structureTracker, targetManager));
+            minecraft.setScreenAndShow(new FindAnywayBiomeScreen(tracker, structureTracker, targetManager));
         }
 
         scanCooldown++;
@@ -131,13 +131,13 @@ public final class FindAnywayClientEvents {
 
     private int openFinder() {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new FindAnywayBiomeScreen(tracker, structureTracker, targetManager));
+        minecraft.setScreenAndShow(new FindAnywayBiomeScreen(tracker, structureTracker, targetManager));
         return 1;
     }
 
     private int openStructureFinder() {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new StructureFinderScreen(tracker, structureTracker, targetManager));
+        minecraft.setScreenAndShow(new StructureFinderScreen(tracker, structureTracker, targetManager));
         return 1;
     }
 
@@ -239,7 +239,7 @@ public final class FindAnywayClientEvents {
 
         return tracker.findNearest(level, player.blockPosition(), query)
             .map(match -> {
-                setTarget(level.dimension().location(), match);
+                setTarget(level.dimension().identifier(), match);
                 var nearest = match.nearestPos();
                 sendClientMessage(Component.translatable(
                     "commands.findanyway.target_set",
@@ -268,7 +268,7 @@ public final class FindAnywayClientEvents {
 
         return structureTracker.findNearest(level, player.blockPosition(), query)
             .map(match -> {
-                targetManager.setStructureTarget(level.dimension().location(), match);
+                targetManager.setStructureTarget(level.dimension().identifier(), match);
                 var anchor = match.anchorPos();
                 sendClientMessage(Component.translatable(
                     "commands.findanyway.target_set",
@@ -296,7 +296,7 @@ public final class FindAnywayClientEvents {
         return 1;
     }
 
-    public void setTarget(ResourceLocation dimensionId, BiomeTracker.BiomeMatch match) {
+    public void setTarget(Identifier dimensionId, BiomeTracker.BiomeMatch match) {
         targetManager.setBiomeTarget(dimensionId, match);
     }
 
